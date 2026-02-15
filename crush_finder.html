@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Match Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .result {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .result-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: pop 0.5s ease-out;
+        }
+
+        .result-title {
+            font-size: 2em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .result-message {
+            color: #666;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+
+        .match {
+            color: #4caf50;
+        }
+
+        .no-match {
+            color: #ff9800;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .privacy-note {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            color: #f44336;
+            margin-top: 8px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .success-message {
+            color: #4caf50;
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+
+        .name-display {
+            background: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        small {
+            color: #666;
+            margin-top: 5px;
+            display: block;
+            font-size: 0.85em;
+        }
+
+        /* Developer Panel Styles - Hidden Access */
+        .admin-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .admin-panel.active {
+            display: flex;
+        }
+
+        .admin-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .admin-header h2 {
+            color: #667eea;
+            font-size: 1.8em;
+        }
+
+        .close-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.05);
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            margin-top: 5px;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .selections-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+
+        .selections-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .selections-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .selections-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .match-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .match-yes {
+            background: #4caf50;
+            color: white;
+        }
+
+        .match-no {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .export-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .export-btn:hover {
+            background: #45a049;
+        }
+
+        .clear-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #f57c00;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .password-prompt {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .password-prompt h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .password-prompt input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .password-prompt input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .password-error {
+            color: #f44336;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>💝 Match Finder</h1>
+                <p>Find your match in the classroom!</p>
+            </div>
+
+            <!-- Step 1: Login with Admission Number -->
+            <div id="step1" class="step active">
+                <div class="info-box">
+                    🎓 <strong>Sign In:</strong> Enter the last 3 digits of your admission number. Your name will be automatically filled from our database.
+                </div>
+
+                <div class="form-group">
+                    <label for="admissionNumber">Last 3 digits of admission number</label>
+                    <input type="text" id="admissionNumber" placeholder="e.g., 123" maxlength="3" pattern="[0-9]{3}" autocomplete="off">
+                    <small>Enter only numbers (3 digits)</small>
+                    <div id="admissionError" class="error-message">
+                        ⚠️ Admission number not found. Please check and try again.
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: none;" id="nameDisplayGroup">
+                    <label>Your Name</label>
+                    <input type="text" id="yourName" class="name-display" readonly>
+                    <div class="success-message">
+                        ✓ Verified student
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="signIn()">Sign In →</button>
+            </div>
+
+            <!-- Step 2: Select Someone -->
+            <div id="step2" class="step">
+                <div class="info-box">
+                    🎮 <strong>How it works:</strong> Select one person from the class. If they also select you, it's a match! Your choice stays private unless there's a mutual match.
+                </div>
+
+                <div class="form-group">
+                    <label for="classList">Who do you want to select?</label>
+                    <select id="classList">
+                        <option value="">-- Choose someone --</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="submitSelection()">Submit Selection</button>
+                <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+
+                <div class="privacy-note">
+                    🔒 <strong>Privacy:</strong> Your selection is kept private. Only mutual matches are revealed!
+                </div>
+            </div>
+
+            <!-- Step 3: Result -->
+            <div id="step3" class="step">
+                <div class="result" id="resultDisplay">
+                    <!-- Result will be shown here -->
+                </div>
+
+                <button class="btn btn-primary" onclick="tryAgain()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel">
+        <div id="passwordPrompt" class="password-prompt">
+            <h3>🔐 Developer Access</h3>
+            <p style="color: #666; margin-bottom: 20px;">Enter password to view all selections</p>
+            <input type="password" id="devPassword" placeholder="Enter password">
+            <button class="btn btn-primary" onclick="verifyPassword()">Access Panel</button>
+            <div id="passwordError" class="password-error">❌ Incorrect password</div>
+            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="closeAdminPanel()">Cancel</button>
+        </div>
+
+        <div id="adminContent" class="admin-content" style="display: none;">
+            <div class="admin-header">
+                <h2>🔧 Developer Panel</h2>
+                <button class="close-btn" onclick="closeAdminPanel()">Close</button>
+            </div>
+
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSelections">0</div>
+                    <div class="stat-label">Total Selections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalMatches">0</div>
+                    <div class="stat-label">Mutual Matches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="uniqueUsers">0</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            </div>
+
+            <div id="selectionsContainer">
+                <!-- Table will be inserted here -->
+            </div>
+
+            <div class="admin-actions">
+                <button class="action-btn export-btn" onclick="exportData()">📥 Export Data</button>
+                <button class="action-btn clear-btn" onclick="clearAllData()">🗑️ Clear All Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DEVELOPER PASSWORD - Change this to your own secure password
+        const DEV_PASSWORD = "admin123";  // ⚠️ CHANGE THIS!
+
+        // SECRET KEYBOARD SHORTCUT: Press Ctrl+Shift+D to open developer panel
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Shift+D (or Cmd+Shift+D on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                openDevPanel();
+            }
+        });
+        // Student Database - Maps last 3 digits to names
+        const studentDatabase = {
+            "141": "Aaryan Vinod",
+            "050": "Adharsh Ts",
+            "044": "Adora Rose Damian",
+            "040": "Adwaidh Ammanath Baiju",
+            "082": "Afeef Ali K",
+            "043": "Aiswarya B",
+            "052": "Akshara M",
+            "016": "Amith A Vadakkan",
+            "117": "Anagha P C",
+            "167": "Anjana S",
+            "060": "Anove Ambrose",
+            "168": "Asna Fathima M S",
+            "062": "Aswin M Rajeev",
+            "093": "Avani Pavithra A",
+            "108": "Avish Krishna M T",
+            "128": "Celina Elizabeth Robi",
+            "003": "Charis Tresa George",
+            "049": "Colin Paul J P",
+            "112": "Devananda A B",
+            "047": "Devananda A R",
+            "139": "Devika Ajith",
+            "073": "Dixson Jose Sebastian",
+            "145": "Ebi Thomas Paul",
+            "137": "Fadil Zulfikker K",
+            "091": "Fathima Shifa V",
+            "084": "Gauthamkrishna M",
+            "011": "Geevarghese Eldho",
+            "171": "Haadiya Rasak",
+            "083": "Hanan Roshan P",
+            "019": "Hanan Muhammed",
+            "101": "Hridhya Elizabeth",
+            "119": "Hridhya Rajeesh",
+            "030": "Jishnu",
+            "017": "Joel Joseph James",
+            "007": "Jonathan George",
+            "118": "June Reny",
+            "106": "Karthik M S",
+            "008": "Kaviyanjaly K A",
+            "169": "Krishnaveni T",
+            "021": "Kuriakose Mathew",
+            "005": "Madhav B R",
+            "148": "Midhun K J",
+            "166": "Mohammed Fazal",
+            "165": "Muhammed K T K",
+            "023": "Muhammed Afsal A",
+            "048": "Muhammed Nihal C K",
+            "034": "Nihad K K",
+            "142": "Nikhil N J",
+            "150": "Niranjana V S",
+            "151": "Nivedya Manoj",
+            "121": "Philip K Thomas",
+            "014": "Racheal Benoy",
+            "131": "Rio Tom Shaju V",
+            "163": "Rithul B Sanil",
+            "135": "Riya Jacob",
+            "057": "Sajay Raj J S",
+            "042": "Salih Younus",
+            "037": "Sanika P Shibu",
+            "154": "Sanjay Surendran N P",
+            "012": "Sara Sobin",
+            "136": "Shabana Ep",
+            "054": "Shana Joy",
+            "113": "Vaishnavi S Panicker"
+        };
+
+        // Get all student names for the dropdown
+        const allStudents = Object.values(studentDatabase);
+
+        // Storage functions
+        function getSelections() {
+            const stored = localStorage.getItem('matchFinderSelections');
+            return stored ? JSON.parse(stored) : {};
+        }
+
+        function saveSelection(person, selectedPerson) {
+            const selections = getSelections();
+            selections[person] = selectedPerson;
+            localStorage.setItem('matchFinderSelections', JSON.stringify(selections));
+        }
+
+        // Real-time validation of admission number
+        document.getElementById('admissionNumber').addEventListener('input', function(e) {
+            const admission = e.target.value.replace(/\D/g, '');
+            e.target.value = admission;
+            
+            const nameGroup = document.getElementById('nameDisplayGroup');
+            const nameInput = document.getElementById('yourName');
+            const errorMsg = document.getElementById('admissionError');
+            
+            if (admission.length === 3) {
+                if (studentDatabase[admission]) {
+                    // Found - show name
+                    nameInput.value = studentDatabase[admission];
+                    nameGroup.style.display = 'block';
+                    errorMsg.style.display = 'none';
+                    e.target.style.borderColor = '#4caf50';
+                } else {
+                    // Not found
+                    nameGroup.style.display = 'none';
+                    errorMsg.style.display = 'block';
+                    e.target.style.borderColor = '#f44336';
+                }
+            } else {
+                // Reset
+                nameGroup.style.display = 'none';
+                errorMsg.style.display = 'none';
+                e.target.style.borderColor = '#e0e0e0';
+            }
+        });
+
+        // Sign in function
+        function signIn() {
+            const admission = document.getElementById('admissionNumber').value.trim();
+            const name = document.getElementById('yourName').value.trim();
+            
+            if (admission.length !== 3) {
+                alert('Please enter a valid 3-digit admission number!');
+                return;
+            }
+            
+            if (!studentDatabase[admission]) {
+                alert('Admission number not found. Please check and try again.');
+                return;
+            }
+
+            // Populate class list (exclude current user)
+            const classList = document.getElementById('classList');
+            classList.innerHTML = '<option value="">-- Choose someone --</option>';
+            
+            allStudents
+                .filter(student => student !== name)
+                .forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student;
+                    option.textContent = student;
+                    classList.appendChild(option);
+                });
+
+            showStep(2);
+        }
+
+        // Submit selection
+        function submitSelection() {
+            const yourName = document.getElementById('yourName').value.trim();
+            const selectedPerson = document.getElementById('classList').value;
+
+            if (!selectedPerson) {
+                alert('Please select someone from the list!');
+                return;
+            }
+
+            // Save selection
+            saveSelection(yourName, selectedPerson);
+
+            // Check for mutual match
+            const selections = getSelections();
+            const theirSelection = selections[selectedPerson];
+            const isMatch = theirSelection && theirSelection === yourName;
+
+            // Show result
+            displayResult(isMatch, yourName, selectedPerson);
+            showStep(3);
+        }
+
+        // Display result
+        function displayResult(isMatch, yourName, selectedPerson) {
+            const resultDiv = document.getElementById('resultDisplay');
+
+            if (isMatch) {
+                resultDiv.innerHTML = `
+                    <div class="result-icon">🎉</div>
+                    <div class="result-title match">It's a Match!</div>
+                    <div class="result-message">
+                        Congratulations! You and <strong>${selectedPerson}</strong> both selected each other!<br><br>
+                        💑 This is a mutual match!
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result-icon">📝</div>
+                    <div class="result-title no-match">Selection Saved!</div>
+                    <div class="result-message">
+                        Your selection of <strong>${selectedPerson}</strong> has been saved.<br><br>
+                        🤞 If they select you too, you'll both be notified of the match!<br><br>
+                        <em>Your choice remains private until there's a mutual match.</em>
+                    </div>
+                `;
+            }
+        }
+
+        // Navigation functions
+        function showStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById('step' + stepNumber).classList.add('active');
+        }
+
+        function goBack() {
+            showStep(1);
+        }
+
+        function tryAgain() {
+            // Clear inputs
+            document.getElementById('admissionNumber').value = '';
+            document.getElementById('yourName').value = '';
+            document.getElementById('nameDisplayGroup').style.display = 'none';
+            document.getElementById('admissionError').style.display = 'none';
+            document.getElementById('admissionNumber').style.borderColor = '#e0e0e0';
+            
+            showStep(1);
+        }
+
+        // ========== DEVELOPER PANEL FUNCTIONS ==========
+
+        // Open developer panel
+        function openDevPanel() {
+            document.getElementById('adminPanel').classList.add('active');
+            document.getElementById('passwordPrompt').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('devPassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+        }
+
+        // Verify password
+        function verifyPassword() {
+            const password = document.getElementById('devPassword').value;
+            
+            if (password === DEV_PASSWORD) {
+                document.getElementById('passwordPrompt').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadAdminData();
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('devPassword').value = '';
+            }
+        }
+
+        // Allow Enter key to submit password
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('devPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyPassword();
+                }
+            });
+        });
+
+        // Close admin panel
+        function closeAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('active');
+        }
+
+        // Load admin data
+        function loadAdminData() {
+            const selections = getSelections();
+            const selectionCount = Object.keys(selections).length;
+            
+            // Calculate matches
+            let matchCount = 0;
+            const matched = new Set();
+            
+            for (let person1 in selections) {
+                const person2 = selections[person1];
+                if (selections[person2] === person1 && !matched.has(person1)) {
+                    matchCount++;
+                    matched.add(person1);
+                    matched.add(person2);
+                }
+            }
+
+            // Update stats
+            document.getElementById('totalSelections').textContent = selectionCount;
+            document.getElementById('totalMatches').textContent = matchCount;
+            document.getElementById('uniqueUsers').textContent = selectionCount;
+
+            // Build table
+            buildSelectionsTable(selections);
+        }
+
+        // Build selections table
+        function buildSelectionsTable(selections) {
+            const container = document.getElementById('selectionsContainer');
+            
+            if (Object.keys(selections).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No selections yet. Students haven't started using the match finder.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let tableHTML = `
+                <table class="selections-table">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Selected</th>
+                            <th>Match Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Sort by name
+            const sortedEntries = Object.entries(selections).sort((a, b) => 
+                a[0].localeCompare(b[0])
+            );
+
+            for (let [person, selected] of sortedEntries) {
+                const isMatch = selections[selected] === person;
+                const matchBadge = isMatch 
+                    ? '<span class="match-badge match-yes">✓ Mutual Match</span>'
+                    : '<span class="match-badge match-no">No Match Yet</span>';
+
+                tableHTML += `
+                    <tr>
+                        <td><strong>${person}</strong></td>
+                        <td>${selected}</td>
+                        <td>${matchBadge}</td>
+                    </tr>
+                `;
+            }
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // Export data as JSON
+        function exportData() {
+            const selections = getSelections();
+            
+            if (Object.keys(selections).length === 0) {
+                alert('No data to export yet!');
+                return;
+            }
+
+            // Create enhanced export with match information
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                totalSelections: Object.keys(selections).length,
+                selections: selections,
+                matches: []
+            };
+
+            // Find all matches
+            const matched = new Set();
+            for (let person1 in selections) {
+                const person2 = selections[person1];
+                if (selections[person2] === person1 && !matched.has(person1)) {
+                    exportData.matches.push({
+                        person1: person1,
+                        person2: person2
+                    });
+                    matched.add(person1);
+                    matched.add(person2);
+                }
+            }
+
+            // Download as JSON file
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `match-finder-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Clear all selections
+        function clearAllData() {
+            if (confirm('⚠️ Are you sure you want to clear ALL selections? This cannot be undone!')) {
+                if (confirm('🚨 FINAL WARNING: This will delete all student selections permanently. Continue?')) {
+                    localStorage.removeItem('matchFinderSelections');
+                    loadAdminData();
+                    alert('✓ All data has been cleared.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
